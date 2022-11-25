@@ -19,6 +19,10 @@ const client = new MongoClient(uri, {
 });
 const userCollection = client.db("peakBook").collection("allUser");
 const bookCategoriesCollection = client.db("peakBook").collection("categories");
+const singleBookCategoriesCollection = client
+  .db("peakBook")
+  .collection("bookCategories");
+const buyingBookCollection = client.db("peakBook").collection("buyingBook");
 
 async function run() {
   try {
@@ -81,6 +85,26 @@ app.get("/categories", async (req, res) => {
   }
 });
 
+//Get Book categories by Id data from mongoDb & send to client
+app.get("/category/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = { category_id: id };
+    const bookCategory = await singleBookCategoriesCollection
+      .find(query)
+      .toArray();
+    res.send({
+      status: true,
+      bookCategory,
+    });
+  } catch {
+    res.send({
+      status: false,
+      error: error,
+    });
+  }
+});
+
 // Add User to MongoDB
 app.post("/users", async (req, res) => {
   try {
@@ -99,9 +123,14 @@ app.post("/users", async (req, res) => {
   }
 });
 
-// Save user email when user login with Google email
+// Book Option For
+app.post("/buyingBooks", async (req, res) => {
+  const buyingBooks = req.body;
+  const result = await buyingBookCollection.insertOne(buyingBooks);
+  res.send(result);
+});
 
-//Google signup user put to db
+// Save user email when user login with Google email
 app.put("/user/:email", async (req, res) => {
   try {
     const email = req.params.email;
