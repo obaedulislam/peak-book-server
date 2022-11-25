@@ -1,0 +1,46 @@
+[
+    {
+        "category_id":"1",
+        "category_name": "Non Fiction",
+        "category_photo": "https://obaedulislam.com/peakbook/non-fiction.jpg",
+        "book_photo": "https://i.ibb.co/Y3PrDL9/slide1.jpg",
+        "resale_price": "120",
+        "original_price": "200",
+        "used_years": "6 months",
+        "posted":"7days",
+        "seller_name":"Obaedul Islam"
+    },
+    {
+        "category_id":"2",
+        "name": "Engineering",
+        "category_photo": "https://obaedulislam.com/peakbook/engineering.jpg",
+        "book_photo": "https://i.ibb.co/Y3PrDL9/slide1.jpg",
+        "resale_price": "320",
+        "original_price": "400",
+        "used_years": "6 months",
+        "posted":"7days",
+        "seller_name":"Obaedul Islam"
+    },
+    {
+        "category_id":"3",	
+        "name": "Medical Book",
+        "category_photo": "https://obaedulislam.com/peakbook/medical.jpg",
+        "book_photo": "https://i.ibb.co/Y3PrDL9/slide1.jpg",
+        "resale_price": "220",
+        "original_price": "300",
+        "used_years": "6 months",
+        "posted":"7days",
+        "seller_name":"Obaedul Islam"
+    },
+    {
+        "category_id":"2",
+        "name": "Engineering",
+        "category_photo": "https://obaedulislam.com/peakbook/engineering.jpg",
+        "book_photo": "https://i.ibb.co/Y3PrDL9/slide1.jpg",
+        "resale_price": "320",
+        "original_price": "400",
+        "used_years": "6 months",
+        "posted":"7days",
+        "seller_name":"Obaedul Islam"
+    },
+]

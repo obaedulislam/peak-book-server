@@ -18,6 +18,7 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 const userCollection = client.db("peakBook").collection("allUser");
+const bookCategoriesCollection = client.db("peakBook").collection("categories");
 
 async function run() {
   try {
@@ -28,6 +29,57 @@ async function run() {
   }
 }
 run();
+
+// JWT Verification Function
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send("Unauthorized Access");
+  }
+  const token = authHeader.split(" ")[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: "Forbidden Access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
+//Get All User From MongoDb & send Client
+app.get("/users", async (req, res) => {
+  try {
+    const query = {};
+    const users = await userCollection.find(query).toArray();
+    res.send({
+      status: true,
+      users,
+    });
+  } catch {
+    res.send({
+      status: false,
+      error: error,
+    });
+  }
+});
+
+//Get categories data from mongoDb & send to client
+app.get("/categories", async (req, res) => {
+  try {
+    const query = {};
+    const bookCategories = await bookCategoriesCollection.find(query).toArray();
+    res.send({
+      status: true,
+      bookCategories,
+    });
+  } catch {
+    res.send({
+      status: false,
+      error: error,
+    });
+  }
+});
 
 // Add User to MongoDB
 app.post("/users", async (req, res) => {
@@ -44,6 +96,35 @@ app.post("/users", async (req, res) => {
       status: false,
       error: error,
     });
+  }
+});
+
+// Save user email when user login with Google email
+
+//Google signup user put to db
+app.put("/user/:email", async (req, res) => {
+  try {
+    const email = req.params.email;
+
+    const user = req.body;
+    const filter = { email: email };
+    const options = { upsert: true };
+    const updateDoc = {
+      $set: user,
+    };
+    const result = await userCollection.updateOne(filter, updateDoc, options);
+
+    // token generate
+    const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN, {
+      expiresIn: "30d",
+    });
+    res.send({
+      status: "success",
+      message: "Token Created Successfully",
+      data: token,
+    });
+  } catch (err) {
+    console.log(err);
   }
 });
 
