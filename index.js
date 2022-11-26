@@ -99,6 +99,13 @@ app.get("/categories", async (req, res) => {
   }
 });
 
+//Get All Book Data from MongoDB and send to Client
+app.get("/bookCategories", async (req, res) => {
+  const query = {};
+  const books = await singleBookCategoriesCollection.find(query).toArray();
+  res.send(books);
+});
+
 //Get Book categories by Id data from mongoDb & send to client
 app.get("/category/:id", async (req, res) => {
   try {
@@ -151,7 +158,7 @@ app.post("/users", async (req, res) => {
   }
 });
 
-// Book Option For
+// Post Buying Book data to MongoDb from client
 app.post("/buyingBooks", async (req, res) => {
   const buyingBooks = req.body;
   const result = await buyingBookCollection.insertOne(buyingBooks);
