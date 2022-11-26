@@ -120,7 +120,7 @@ app.get("/category/:id", async (req, res) => {
 });
 
 //Get Buying books data using query
-app.get("/buyingBooks", verifyJWT, async (req, res) => {
+app.get("/categories", verifyJWT, async (req, res) => {
   const email = req.query.email;
   const decodedEmail = req.decoded.email;
 
@@ -155,6 +155,13 @@ app.post("/users", async (req, res) => {
 app.post("/buyingBooks", async (req, res) => {
   const buyingBooks = req.body;
   const result = await buyingBookCollection.insertOne(buyingBooks);
+  res.send(result);
+});
+
+//Add doctor data tp mongoDb & show it to the client
+app.post("/bookCategories", async (req, res) => {
+  const book = req.body;
+  const result = await singleBookCategoriesCollection.insertOne(book);
   res.send(result);
 });
 
