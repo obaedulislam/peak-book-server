@@ -51,6 +51,19 @@ function verifyJWT(req, res, next) {
   });
 }
 
+// NOTE: Make sure you use VerifyAdmin after VerifyJWT
+const verifyAdmin = async (req, res, next) => {
+  console.log("Inside verifyAdmin", req.decoded.email);
+  const decodedEmail = req.decoded.email;
+  const query = { email: decodedEmail };
+  const user = await userCollection.findOne(query);
+
+  if (user?.role !== "Admin") {
+    return res.status(403).send({ message: "Forbidden Access" });
+  }
+  next();
+};
+
 //Get All User From MongoDb & send Client
 app.get("/users", async (req, res) => {
   try {
@@ -105,6 +118,20 @@ app.get("/category/:id", async (req, res) => {
   }
 });
 
+//Get Buying books data using query
+app.get("/buyingBooks", async (req, res) => {
+  const email = req.query.email;
+  // const decodedEmail = req.decoded.email;
+
+  // if (email !== decodedEmail) {
+  //   return res.status(403).send({ message: "Forbidden Access" });
+  // }
+
+  const query = { email: email };
+  const buyingBooks = await buyingBookCollection.find(query).toArray();
+  res.send(buyingBooks);
+});
+
 // Add User to MongoDB
 app.post("/users", async (req, res) => {
   try {
@@ -156,6 +183,20 @@ app.put("/user/:email", async (req, res) => {
     console.log(err);
   }
 });
+
+// //Update user(Admin) role for authorization & send to mongoDB
+// app.put("/users/admin/:id", verifyAdmin, async (req, res) => {
+//   const id = req.params.id;
+//   const filter = { _id: ObjectId(id) };
+//   const options = { upsert: true };
+//   const updatedDoc = {
+//     $set: {
+//       role: "admin",
+//     },
+//   };
+//   const result = await userCollection.updateOne(filter, updatedDoc, options);
+//   res.send(result);
+// });
 
 //Generate Token to user Access
 app.get("/jwt", async (req, res) => {
