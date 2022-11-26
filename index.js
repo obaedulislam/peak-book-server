@@ -36,6 +36,7 @@ run();
 
 // JWT Verification Function
 function verifyJWT(req, res, next) {
+  console.log("Token Inside JWt", req.headers.authorization);
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send("Unauthorized Access");
@@ -119,13 +120,13 @@ app.get("/category/:id", async (req, res) => {
 });
 
 //Get Buying books data using query
-app.get("/buyingBooks", async (req, res) => {
+app.get("/buyingBooks", verifyJWT, async (req, res) => {
   const email = req.query.email;
-  // const decodedEmail = req.decoded.email;
+  const decodedEmail = req.decoded.email;
 
-  // if (email !== decodedEmail) {
-  //   return res.status(403).send({ message: "Forbidden Access" });
-  // }
+  if (email !== decodedEmail) {
+    return res.status(403).send({ message: "Forbidden Access" });
+  }
 
   const query = { email: email };
   const buyingBooks = await buyingBookCollection.find(query).toArray();
