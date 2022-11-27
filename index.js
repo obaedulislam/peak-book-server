@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 var jwt = require("jsonwebtoken");
 
@@ -64,6 +64,14 @@ const verifyAdmin = async (req, res, next) => {
   }
   next();
 };
+//Get Buying books data using query
+app.get("/buyingBooks", async (req, res) => {
+  const email = req.query.email;
+
+  const query = { email: email };
+  const buyingBooks = await buyingBookCollection.find(query).toArray();
+  res.send(buyingBooks);
+});
 
 //Get All User From MongoDb & send Client
 app.get("/users", async (req, res) => {
@@ -80,6 +88,13 @@ app.get("/users", async (req, res) => {
       error: error,
     });
   }
+});
+
+//Get All Sellers Data from mongoDb
+app.get("/users/sellers", async (req, res) => {
+  const query = { role: "Seller" };
+  const sellers = await userCollection.find(query).toArray();
+  res.send(sellers);
 });
 
 //Get categories data from mongoDb & send to client
