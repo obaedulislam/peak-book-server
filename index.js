@@ -249,6 +249,15 @@ app.get("/jwt", async (req, res) => {
   res.status(403).send({ accessToken: "" });
 });
 
+// Post JWT Token
+app.post("/jwt", (req, res) => {
+  const user = req.body;
+  const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
+    expiresIn: "30d",
+  });
+  res.send({ token });
+});
+
 app.get("/", async (req, res) => {
   res.send("Peak Book Server is Running ");
 });
