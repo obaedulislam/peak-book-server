@@ -67,7 +67,6 @@ const verifyAdmin = async (req, res, next) => {
 //Get Buying books data using query
 app.get("/buyingBooks", async (req, res) => {
   const email = req.query.email;
-
   const query = { email: email };
   const buyingBooks = await buyingBookCollection.find(query).toArray();
   res.send(buyingBooks);
@@ -95,6 +94,14 @@ app.get("/users/sellers", async (req, res) => {
   const query = { role: "Seller" };
   const sellers = await userCollection.find(query).toArray();
   res.send(sellers);
+});
+
+//Get All Sellers Data from mongoDb
+app.get("/users/buyers", async (req, res) => {
+  const query = { role: "Buyer" };
+  const buyers = await userCollection.find(query).toArray();
+  console.log(buyers);
+  res.send(buyers);
 });
 
 //Get categories data from mongoDb & send to client
