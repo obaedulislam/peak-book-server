@@ -17,24 +17,9 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
-const userCollection = client.db("peakBook").collection("allUser");
-const bookCategoriesCollection = client.db("peakBook").collection("categories");
-const booksCollection = client.db("peakBook").collection("bookCategories");
-const buyingBookCollection = client.db("peakBook").collection("buyingBook");
-
-async function run() {
-  try {
-    await client.connect();
-    console.log("Database Connected".yellow);
-  } catch (error) {
-    console.log(error.name.bgRed, error.message.bold, error.stack);
-  }
-}
-run();
 
 // JWT Verification Function
 function verifyJWT(req, res, next) {
-  console.log("Token Inside JWt", req.headers.authorization);
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send("Unauthorized Access");
@@ -50,7 +35,22 @@ function verifyJWT(req, res, next) {
   });
 }
 
-// NOTE: Make sure you use VerifyAdmin after VerifyJWT
+const userCollection = client.db("peakBook").collection("allUser");
+const bookCategoriesCollection = client.db("peakBook").collection("categories");
+const booksCollection = client.db("peakBook").collection("bookCategories");
+const buyingBookCollection = client.db("peakBook").collection("buyingBook");
+
+async function run() {
+  try {
+    await client.connect();
+    console.log("Database Connected".yellow);
+  } catch (error) {
+    console.log(error.name.bgRed, error.message.bold, error.stack);
+  }
+}
+run();
+
+// Verify Admin from mongo db
 const verifyAdmin = async (req, res, next) => {
   console.log("Inside verifyAdmin", req.decoded.email);
   const decodedEmail = req.decoded.email;
@@ -94,6 +94,14 @@ app.get("/users", async (req, res) => {
       error: error,
     });
   }
+});
+
+//Get Admin from mongoDb
+app.get("/users/admin/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = { email };
+  const user = await userCollection.findOne(query);
+  res.send({ isAdmin: user?.role === "Admin" });
 });
 
 //Get All Sellers Data from mongoDb
@@ -226,25 +234,25 @@ app.put("/user/:email", async (req, res) => {
   }
 });
 
-// //Update user(Admin) role for authorization & send to mongoDB
-// app.put("/users/admin/:id", verifyAdmin, async (req, res) => {
-//   const id = req.params.id;
-//   const filter = { _id: ObjectId(id) };
-//   const options = { upsert: true };
-//   const updatedDoc = {
-//     $set: {
-//       role: "admin",
-//     },
-//   };
-//   const result = await userCollection.updateOne(filter, updatedDoc, options);
-//   res.send(result);
-// });
+//Update user(Admin) role for authorization & send to mongoDB
+app.put("/users/admin/:id", verifyJWT, verifyAdmin, async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: ObjectId(id) };
+  const options = { upsert: true };
+  const updatedDoc = {
+    $set: {
+      role: "Admin",
+    },
+  };
+  const result = await userCollection.updateOne(filter, updatedDoc, options);
+  res.send(result);
+});
 
 //Generate Token to user Access
 app.get("/jwt", async (req, res) => {
   const email = req.query.email;
   const query = { email: email };
-  const user = await userCollection.findOne({ email: email });
+  const user = await userCollection.findOne(query);
   if (user) {
     const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
       expiresIn: "30d",
