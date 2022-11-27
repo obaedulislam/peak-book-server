@@ -19,9 +19,7 @@ const client = new MongoClient(uri, {
 });
 const userCollection = client.db("peakBook").collection("allUser");
 const bookCategoriesCollection = client.db("peakBook").collection("categories");
-const singleBookCategoriesCollection = client
-  .db("peakBook")
-  .collection("bookCategories");
+const booksCollection = client.db("peakBook").collection("bookCategories");
 const buyingBookCollection = client.db("peakBook").collection("buyingBook");
 
 async function run() {
@@ -64,12 +62,21 @@ const verifyAdmin = async (req, res, next) => {
   }
   next();
 };
+
 //Get Buying books data using query
 app.get("/buyingBooks", async (req, res) => {
   const email = req.query.email;
   const query = { email: email };
   const buyingBooks = await buyingBookCollection.find(query).toArray();
   res.send(buyingBooks);
+});
+
+//Get Buying books data using query
+app.get("/my-products", async (req, res) => {
+  const query = { seller_email: req.query.email };
+  console.log(query);
+  const myProducts = await booksCollection.find(query).toArray();
+  res.send(myProducts);
 });
 
 //Get All User From MongoDb & send Client
@@ -124,7 +131,7 @@ app.get("/categories", async (req, res) => {
 //Get All Book Data from MongoDB and send to Client
 app.get("/bookCategories", async (req, res) => {
   const query = {};
-  const books = await singleBookCategoriesCollection.find(query).toArray();
+  const books = await booksCollection.find(query).toArray();
   res.send(books);
 });
 
@@ -133,9 +140,7 @@ app.get("/category/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const query = { category_id: id };
-    const bookCategory = await singleBookCategoriesCollection
-      .find(query)
-      .toArray();
+    const bookCategory = await booksCollection.find(query).toArray();
     res.send({
       status: true,
       bookCategory,
@@ -190,7 +195,7 @@ app.post("/buyingBooks", async (req, res) => {
 //Add doctor data tp mongoDb & show it to the client
 app.post("/bookCategories", async (req, res) => {
   const book = req.body;
-  const result = await singleBookCategoriesCollection.insertOne(book);
+  const result = await booksCollection.insertOne(book);
   res.send(result);
 });
 
