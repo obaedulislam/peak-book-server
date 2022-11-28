@@ -50,9 +50,12 @@ async function run() {
 }
 run();
 
+/* ====================
+Verify All Users Function Start
+=======================*/
+
 // Verify Admin from mongo db
 const verifyAdmin = async (req, res, next) => {
-  console.log("Inside verifyAdmin", req.decoded.email);
   const decodedEmail = req.decoded.email;
   const query = { email: decodedEmail };
   const user = await userCollection.findOne(query);
@@ -62,6 +65,22 @@ const verifyAdmin = async (req, res, next) => {
   }
   next();
 };
+
+// Verify Seller from mongoDB
+const verifySeller = async (req, res, next) => {
+  const decodedEmail = req.decoded.email;
+  const query = { email: decodedEmail };
+  const user = await userCollection.findOne(query);
+
+  if (user?.role !== "Seller") {
+    return res.status(403).send({ message: "Forbidden Access" });
+  }
+  next();
+};
+
+/* ====================
+Verify All Users Function Start
+=======================*/
 
 //Get Buying books data using query
 app.get("/buyingBooks", async (req, res) => {
@@ -133,17 +152,6 @@ app.put("/my-products/ad/:id", async (req, res) => {
   res.send(result);
 });
 
-// delete the product from my-products route
-app.delete("/my-products/:id", async (req, res) => {
-  const id = req.params.id;
-  const query = { _id: ObjectId(id) };
-  const result = await booksCollection.deleteOne(query);
-  res.send({
-    status: true,
-    message: "The product has been deleted",
-  });
-});
-
 //Get All User From MongoDb & send Client
 app.get("/users", async (req, res) => {
   try {
@@ -161,6 +169,10 @@ app.get("/users", async (req, res) => {
   }
 });
 
+/* ====================
+User Verification Start
+=======================*/
+
 //Get Admin from mongoDb
 app.get("/users/admin/:email", async (req, res) => {
   const email = req.params.email;
@@ -169,6 +181,26 @@ app.get("/users/admin/:email", async (req, res) => {
   res.send({ isAdmin: user?.role === "Admin" });
 });
 
+//Get seller from mongoDb
+app.get("/users/seller/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = { email };
+  const user = await userCollection.findOne(query);
+  res.send({ isSeller: user?.role === "Seller" });
+});
+
+//Get Buyer from mongoDb
+app.get("/users/buyer/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = { email };
+  const user = await userCollection.findOne(query);
+  res.send({ isBuyer: user?.role === "Buyer" });
+});
+
+/* ====================
+User Verification Start
+=======================*/
+
 //Get All Sellers Data from mongoDb
 app.get("/users/sellers", async (req, res) => {
   const query = { role: "Seller" };
@@ -176,7 +208,7 @@ app.get("/users/sellers", async (req, res) => {
   res.send(sellers);
 });
 
-//Get All Sellers Data from mongoDb
+//Get All Buyers Data from mongoDb
 app.get("/users/buyers", async (req, res) => {
   const query = { role: "Buyer" };
   const buyers = await userCollection.find(query).toArray();
@@ -313,6 +345,20 @@ app.put("/users/admin/:id", verifyJWT, verifyAdmin, async (req, res) => {
   res.send(result);
 });
 
+//Update user(Admin) role for authorization & send to mongoDB
+app.put("/users/seller/:id", verifyJWT, verifySeller, async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: ObjectId(id) };
+  const options = { upsert: true };
+  const updatedDoc = {
+    $set: {
+      role: "Seller",
+    },
+  };
+  const result = await userCollection.updateOne(filter, updatedDoc, options);
+  res.send(result);
+});
+
 //Generate Token to user Access
 app.get("/jwt", async (req, res) => {
   const email = req.query.email;
@@ -334,6 +380,30 @@ app.post("/jwt", (req, res) => {
     expiresIn: "30d",
   });
   res.send({ token });
+});
+
+// delete the product from my-products route
+app.delete("/my-products/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const result = await booksCollection.deleteOne(query);
+  res.send({
+    status: true,
+    message: "The product has been deleted",
+  });
+});
+
+// Delete Users form AllUser
+app.delete("/user/:id", async (req, res) => {
+  const id = req.params.id;
+  console.log("Here Id", id);
+  const query = { _id: ObjectId(id) };
+  const result = await userCollection.deleteOne(query);
+  res.send({
+    ...result,
+    status: true,
+    message: "The product has been deleted",
+  });
 });
 
 app.get("/", async (req, res) => {
