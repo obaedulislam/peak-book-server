@@ -79,6 +79,60 @@ app.get("/my-products", async (req, res) => {
   res.send(myProducts);
 });
 
+// //get the advertised products and make sure the product is available
+app.get("/advertised-products", async (req, res) => {
+  try {
+    const query = {
+      $and: [
+        {
+          advertise: true,
+        },
+        {
+          $or: [{ salesStatus: false }, { salesStatus: { $exists: false } }],
+        },
+      ],
+    };
+    const adsProducts = await booksCollection.find(query).toArray();
+    res.send({
+      status: true,
+      adsProducts,
+    });
+  } catch (error) {
+    res.send({
+      status: false,
+      error: error.message,
+    });
+  }
+});
+
+//Product Sale status  set on MongoDB
+app.put("/my-products/:id", async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: ObjectId(id) };
+  const options = { upsert: true };
+  const updatedDoc = {
+    $set: {
+      salesStatus: true,
+    },
+  };
+  const result = await booksCollection.updateOne(filter, updatedDoc, options);
+  res.send(result);
+});
+
+//Advertise  product set on MongoDB
+app.put("/my-products/ad/:id", async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: ObjectId(id) };
+  const options = { upsert: true };
+  const updatedDoc = {
+    $set: {
+      advertise: true,
+    },
+  };
+  const result = await booksCollection.updateOne(filter, updatedDoc, options);
+  res.send(result);
+});
+
 //Get All User From MongoDb & send Client
 app.get("/users", async (req, res) => {
   try {
