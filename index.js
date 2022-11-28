@@ -133,6 +133,17 @@ app.put("/my-products/ad/:id", async (req, res) => {
   res.send(result);
 });
 
+// delete the product from my-products route
+app.delete("/my-products/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const result = await booksCollection.deleteOne(query);
+  res.send({
+    status: true,
+    message: "The product has been deleted",
+  });
+});
+
 //Get All User From MongoDb & send Client
 app.get("/users", async (req, res) => {
   try {
