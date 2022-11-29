@@ -151,6 +151,13 @@ app.put("/my-products/ad/:id", async (req, res) => {
   res.send(result);
 });
 
+// Get reported product from mongoDB & sent client
+app.get("/reported-products", async (req, res) => {
+  const query = { reported: true };
+  const reportedBook = await booksCollection.find(query).toArray();
+  res.send(reportedBook);
+});
+
 //Reported  product set on MongoDB
 app.put("/reported-product/:id", async (req, res) => {
   const id = req.params.id;
