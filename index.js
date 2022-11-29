@@ -93,7 +93,6 @@ app.get("/buyingBooks", async (req, res) => {
 //Get Buying books data using query
 app.get("/my-products", async (req, res) => {
   const query = { seller_email: req.query.email };
-  console.log(query);
   const myProducts = await booksCollection.find(query).toArray();
   res.send(myProducts);
 });
@@ -149,6 +148,20 @@ app.put("/my-products/ad/:id", async (req, res) => {
     },
   };
   const result = await booksCollection.updateOne(filter, updatedDoc, options);
+  res.send(result);
+});
+
+//Reported  product set on MongoDB
+app.put("/reported-product/:id", async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: ObjectId(id) };
+  const options = { upsert: true };
+  const updateDoc = {
+    $set: {
+      reported: true,
+    },
+  };
+  const result = await booksCollection.updateOne(filter, updateDoc, options);
   res.send(result);
 });
 
@@ -212,7 +225,6 @@ app.get("/users/sellers", async (req, res) => {
 app.get("/users/buyers", async (req, res) => {
   const query = { role: "Buyer" };
   const buyers = await userCollection.find(query).toArray();
-  console.log(buyers);
   res.send(buyers);
 });
 
@@ -276,7 +288,6 @@ app.get("/categories", verifyJWT, async (req, res) => {
 app.post("/users", async (req, res) => {
   try {
     const user = await userCollection.insertOne(req.body);
-    console.log(user);
     res.send({
       status: true,
       message: `User successfully SignUp`,
@@ -394,10 +405,9 @@ app.delete("/my-products/:id", async (req, res) => {
   });
 });
 
-// Delete Users form AllUser
+// Delete Users form MongoDB
 app.delete("/user/:id", async (req, res) => {
   const id = req.params.id;
-  console.log("Here Id", id);
   const query = { _id: ObjectId(id) };
   const result = await userCollection.deleteOne(query);
   res.send({
@@ -407,15 +417,27 @@ app.delete("/user/:id", async (req, res) => {
   });
 });
 
+// Delete Sellers form MongoDb
 app.delete("/seller/:id", async (req, res) => {
   const id = req.params.id;
   const query = { _id: ObjectId(id) };
   const result = await userCollection.deleteOne(query);
-  console.log(result);
   res.send({
     ...result,
     status: true,
     message: "The Seller has been deleted",
+  });
+});
+
+// Delete Buyers form MongoDb
+app.delete("/buyer/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const result = await userCollection.deleteOne(query);
+  res.send({
+    ...result,
+    status: true,
+    message: "The Buyer has been deleted",
   });
 });
 
