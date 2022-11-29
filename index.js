@@ -388,6 +388,7 @@ app.delete("/my-products/:id", async (req, res) => {
   const query = { _id: ObjectId(id) };
   const result = await booksCollection.deleteOne(query);
   res.send({
+    ...result,
     status: true,
     message: "The product has been deleted",
   });
@@ -402,7 +403,19 @@ app.delete("/user/:id", async (req, res) => {
   res.send({
     ...result,
     status: true,
-    message: "The product has been deleted",
+    message: "The User has been deleted",
+  });
+});
+
+app.delete("/seller/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const result = await userCollection.deleteOne(query);
+  console.log(result);
+  res.send({
+    ...result,
+    status: true,
+    message: "The Seller has been deleted",
   });
 });
 
