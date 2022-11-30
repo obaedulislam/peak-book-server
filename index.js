@@ -3,7 +3,8 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 var jwt = require("jsonwebtoken");
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+console.log(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 4500;
 const app = express();
 
@@ -39,6 +40,7 @@ const userCollection = client.db("peakBook").collection("allUser");
 const bookCategoriesCollection = client.db("peakBook").collection("categories");
 const booksCollection = client.db("peakBook").collection("bookCategories");
 const buyingBookCollection = client.db("peakBook").collection("buyingBook");
+const paymentsCollection = client.db("peakBook").collection("payments");
 
 async function run() {
   try {
@@ -90,6 +92,14 @@ app.get("/buyingBooks", async (req, res) => {
   res.send(buyingBooks);
 });
 
+app.get("/payment/:id", async (req, res) => {
+  const id = req.params.id;
+  console.log(id);
+  const query = { _id: ObjectId(id) };
+  const buyingBooks = await buyingBookCollection.findOne(query);
+  res.send(buyingBooks);
+});
+
 //Get Buying books data using query
 app.get("/my-products", async (req, res) => {
   const query = { seller_email: req.query.email };
@@ -106,7 +116,7 @@ app.get("/advertised-products", async (req, res) => {
           advertise: true,
         },
         {
-          $or: [{ salesStatus: false }, { salesStatus: { $exists: false } }],
+          salesStatus: false,
         },
       ],
     };
@@ -126,14 +136,16 @@ app.get("/advertised-products", async (req, res) => {
 //Product Sale status  set on MongoDB
 app.put("/my-products/:id", async (req, res) => {
   const id = req.params.id;
+  const status = req.body.status;
   const filter = { _id: ObjectId(id) };
   const options = { upsert: true };
   const updatedDoc = {
     $set: {
-      salesStatus: true,
+      salesStatus: status,
     },
   };
   const result = await booksCollection.updateOne(filter, updatedDoc, options);
+  console.log(result);
   res.send(result);
 });
 
@@ -206,7 +218,10 @@ app.get("/users/seller/:email", async (req, res) => {
   const email = req.params.email;
   const query = { email };
   const user = await userCollection.findOne(query);
-  res.send({ isSeller: user?.role === "Seller" });
+  res.send({
+    isSeller: user?.role === "Seller",
+    isSellerVerified: user?.isSellerVerified,
+  });
 });
 
 //Get Buyer from mongoDb
@@ -226,6 +241,33 @@ app.get("/users/sellers", async (req, res) => {
   const query = { role: "Seller" };
   const sellers = await userCollection.find(query).toArray();
   res.send(sellers);
+});
+
+//make the seller verified //should be verifyAdmin
+app.patch("/seller/:id", verifyJWT, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const status = req.body.status;
+    console.log("inside", id, status);
+    const query = { _id: ObjectId(id) };
+    const updatedDoc = {
+      $set: {
+        isSellerVerified: status,
+      },
+    };
+    const result = await userCollection.updateOne(query, updatedDoc);
+    const bookResult = await booksCollection.updateOne(query, updatedDoc);
+
+    res.send({
+      status: true,
+      message: `You have successfully verified the seller!`,
+    });
+  } catch (error) {
+    res.send({
+      status: false,
+      error: error.message,
+    });
+  }
 });
 
 //Get All Buyers Data from mongoDb
@@ -263,7 +305,16 @@ app.get("/bookCategories", async (req, res) => {
 app.get("/category/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const query = { category_id: id };
+    const query = {
+      $and: [
+        {
+          category_id: id,
+        },
+        {
+          salesStatus: false,
+        },
+      ],
+    };
     const bookCategory = await booksCollection.find(query).toArray();
     res.send({
       status: true,
@@ -319,6 +370,40 @@ app.post("/buyingBooks", async (req, res) => {
 app.post("/bookCategories", async (req, res) => {
   const book = req.body;
   const result = await booksCollection.insertOne(book);
+  res.send(result);
+});
+
+// Post Your payment to MongoDB
+app.post("/create-payment-intent", async (req, res) => {
+  const booking = req.body;
+  const price = booking.bookPrice;
+  const amount = price * 100;
+  const paymentIntent = await stripe.paymentIntents.create({
+    currency: "usd",
+    amount: amount,
+    payment_method_types: ["card"],
+  });
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+});
+
+// Payment Collection Info
+app.post("/payments", async (req, res) => {
+  const payment = req.body;
+  const result = await paymentsCollection.insertOne(payment);
+  const id = payment.paymentId;
+  const filter = { _id: ObjectId(id) };
+  const updatedDoc = {
+    $set: {
+      salesStatus: true,
+      transactionId: payment.transactionId,
+    },
+  };
+  const updatedResult = await buyingBookCollection.updateOne(
+    filter,
+    updatedDoc
+  );
   res.send(result);
 });
 
@@ -445,6 +530,18 @@ app.delete("/buyer/:id", async (req, res) => {
     ...result,
     status: true,
     message: "The Buyer has been deleted",
+  });
+});
+
+// Delete Reported form MongoDB
+app.delete("/reported-item/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const result = await booksCollection.deleteOne(query);
+  res.send({
+    ...result,
+    status: true,
+    message: "The Book has been deleted",
   });
 });
 
