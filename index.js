@@ -85,7 +85,7 @@ Verify All Users Function Start
 =======================*/
 
 //Get Buying books data using query
-app.get("/buyingBooks", async (req, res) => {
+app.get("/buyingBooks", verifyJWT, async (req, res) => {
   const email = req.query.email;
   const query = { email: email };
   const buyingBooks = await buyingBookCollection.find(query).toArray();
@@ -150,7 +150,7 @@ app.put("/my-products/:id", async (req, res) => {
 });
 
 //Advertise  product set on MongoDB
-app.put("/my-products/ad/:id", async (req, res) => {
+app.put("/my-products/ad/:id", verifyJWT, async (req, res) => {
   const id = req.params.id;
   const filter = { _id: ObjectId(id) };
   const options = { upsert: true };
@@ -185,7 +185,7 @@ app.put("/reported-product/:id", async (req, res) => {
 });
 
 //Get All User From MongoDb & send Client
-app.get("/users", async (req, res) => {
+app.get("/users", verifyJWT, async (req, res) => {
   try {
     const query = {};
     const users = await userCollection.find(query).toArray();
@@ -225,7 +225,7 @@ app.get("/users/seller/:email", async (req, res) => {
 });
 
 //Get Buyer from mongoDb
-app.get("/users/buyer/:email", async (req, res) => {
+app.get("/users/buyer/:email", verifyJWT, verifyAdmin, async (req, res) => {
   const email = req.params.email;
   const query = { email };
   const user = await userCollection.findOne(query);
@@ -343,7 +343,7 @@ app.get("/categories", verifyJWT, async (req, res) => {
 });
 
 // Add User to MongoDB
-app.post("/users", async (req, res) => {
+app.post("/users", verifyJWT, async (req, res) => {
   try {
     const user = await userCollection.insertOne(req.body);
     res.send({
