@@ -206,7 +206,7 @@ User Verification Start
 =======================*/
 
 //Get Admin from mongoDb
-app.get("/users/admin/:email", verifyJWT, async (req, res) => {
+app.get("/users/admin/:email", async (req, res) => {
   const email = req.params.email;
   const query = { email };
   const user = await userCollection.findOne(query);
@@ -214,7 +214,7 @@ app.get("/users/admin/:email", verifyJWT, async (req, res) => {
 });
 
 //Get seller from mongoDb
-app.get("/users/seller/:email", verifyJWT, async (req, res) => {
+app.get("/users/seller/:email", async (req, res) => {
   const email = req.params.email;
   const query = { email };
   const user = await userCollection.findOne(query);
@@ -225,7 +225,7 @@ app.get("/users/seller/:email", verifyJWT, async (req, res) => {
 });
 
 //Get Buyer from mongoDb
-app.get("/users/buyer/:email", verifyJWT, verifyAdmin, async (req, res) => {
+app.get("/users/buyer/:email", async (req, res) => {
   const email = req.params.email;
   const query = { email };
   const user = await userCollection.findOne(query);
@@ -237,7 +237,7 @@ User Verification Start
 =======================*/
 
 //Get All Sellers Data from mongoDb
-app.get("/users/sellers", verifyJWT, async (req, res) => {
+app.get("/users/sellers", async (req, res) => {
   const query = { role: "Seller" };
   const sellers = await userCollection.find(query).toArray();
   res.send(sellers);
